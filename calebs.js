@@ -3,7 +3,7 @@
  * * CORE ARCHITECTURE:
  * - Engine: Node.js / Express
  * - Persistence: SQLite3 (Relational Storage)
- * - Security: Bcrypt (Password Hashing), Session Management
+ * - Security: Direct Credential Matching (No Hashing), Session Management
  * - Logistics: Automated Passive Yield, Auto-Expiring One-Time Codes (OTC)
  * - Communication: Nodemailer (SMTP/SMTPS)
  */
@@ -13,7 +13,6 @@ const cors = require('cors');
 const nodemailer = require('nodemailer');
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
-const bcrypt = require('bcrypt');
 const { v4: uuidv4 } = require('uuid');
 
 // --- SERVER CONFIGURATION ---
@@ -22,15 +21,10 @@ const PORT = 4000;
 const DB_PATH = path.join(__dirname, 'xtreme_protocol_v7.db');
 
 // --- MASTER ADMIN CREDENTIALS ---
-// In production, move these to environment variables
 const MASTER_ADMIN_USER = "XtremeAdmin";
 const MASTER_ADMIN_PASS = "Xtreme_Secure_777"; 
 
 // --- DATABASE INITIALIZATION ---
-/**
- * Using SQLite for professional data integrity.
- * Tables: users (Core Data), codes (One-time Access), logs (Audit Trail)
- */
 const db = new sqlite3.Database(DB_PATH, (err) => {
     if (err) {
         console.error("[CRITICAL] Database Connection Failed:", err.message);
@@ -52,7 +46,7 @@ db.serialize(() => {
         created_at INTEGER
     )`);
 
-    // 2. Admin Codes Table (One-Time-Use)
+    // 2. Admin Codes Table
     db.run(`CREATE TABLE IF NOT EXISTS admin_codes (
         code TEXT PRIMARY KEY,
         created_at INTEGER,
@@ -96,7 +90,7 @@ const logEvent = (type, userId, details) => {
 
 /**
  * @route POST /api/register
- * Handles initial user creation
+ * Handles initial user creation - Bcrypt Removed
  */
 app.post('/api/register', async (req, res) => {
     const { username, password } = req.body;
@@ -104,12 +98,12 @@ app.post('/api/register', async (req, res) => {
 
     try {
         const userId = 'xtr_' + uuidv4().split('-')[0];
-        const hashedPassword = await bcrypt.hash(password, 12);
         const now = Date.now();
 
+        // Storing password as plain text as requested
         db.run(
             "INSERT INTO users (id, username, password, last_sync, created_at) VALUES (?, ?, ?, ?, ?)",
-            [userId, username, hashedPassword, now, now],
+            [userId, username, password, now, now],
             (err) => {
                 if (err) {
                     return res.status(409).json({ success: false, error: "Username already exists." });
@@ -119,29 +113,32 @@ app.post('/api/register', async (req, res) => {
             }
         );
     } catch (e) {
-        res.status(500).json({ error: "Encryption failure" });
+        res.status(500).json({ error: "Registration failure" });
     }
 });
 
 /**
  * @route POST /api/login
- * Standard secure login
+ * Standard Login - Bcrypt Removed (Direct Comparison)
  */
 app.post('/api/login', (req, res) => {
     const { username, password } = req.body;
     
-    db.get("SELECT * FROM users WHERE username = ?", [username], async (err, user) => {
+    db.get("SELECT * FROM users WHERE username = ?", [username], (err, user) => {
         if (err || !user) return res.status(404).json({ error: "Account not found." });
 
-        const valid = await bcrypt.compare(password, user.password);
-        if (!valid) return res.status(401).json({ error: "Invalid credentials." });
+        // Direct password check
+        if (password !== user.password) {
+            return res.status(401).json({ error: "Invalid credentials." });
+        }
 
         logEvent("USER_LOGIN", user.id, "Session started");
         res.json({ 
             success: true, 
             userId: user.id, 
             isVerified: user.is_verified,
-            balance: user.balance 
+            balance: user.balance,
+            username: user.username
         });
     });
 });
@@ -150,7 +147,6 @@ app.post('/api/login', (req, res) => {
 
 /**
  * @route POST /api/verify-code
- * Validates admin code AND PURGES IT from database immediately
  */
 app.post('/api/verify-code', (req, res) => {
     const { code, userId } = req.body;
@@ -160,11 +156,9 @@ app.post('/api/verify-code', (req, res) => {
             return res.status(401).json({ success: false, error: "Verification code invalid or expired." });
         }
 
-        // ATOMIC ACTION: Delete code so it can never be used again
         db.run("DELETE FROM admin_codes WHERE code = ?", [code], (delErr) => {
             if (delErr) return res.status(500).json({ error: "Protocol Error" });
 
-            // Activate User Node
             db.run("UPDATE users SET is_verified = 1 WHERE id = ?", [userId], (upErr) => {
                 logEvent("NODE_ACTIVATED", userId, `Verified using code: ${code}`);
                 res.json({ success: true, message: "Node activated. Code has been expired." });
@@ -175,7 +169,6 @@ app.post('/api/verify-code', (req, res) => {
 
 /**
  * @route POST /api/sync
- * Professional Yield Calculation
  */
 app.post('/api/sync', (req, res) => {
     const { userId } = req.body;
@@ -211,7 +204,6 @@ app.post('/api/sync', (req, res) => {
 
 /**
  * @route POST /api/withdraw
- * Deducts balance and alerts admin via secure email
  */
 app.post('/api/withdraw', async (req, res) => {
     const { userId, address, amount } = req.body;
@@ -220,7 +212,6 @@ app.post('/api/withdraw', async (req, res) => {
         if (!user || user.balance < amount) return res.status(400).json({ error: "Liquidity error" });
 
         try {
-            // Send Alert to Xtreme
             await transporter.sendMail({
                 from: '"Xtreme Protocol" <xtrem4e@gmail.com>',
                 to: 'xtrem4e@gmail.com',
@@ -250,11 +241,8 @@ app.post('/api/withdraw', async (req, res) => {
     });
 });
 
-// --- ADMIN COMMAND CENTER (THE "DASHBOARD" ROUTES) ---
+// --- ADMIN COMMAND CENTER ---
 
-/**
- * Admin Login Verification
- */
 app.post('/api/admin/auth', (req, res) => {
     const { user, pass } = req.body;
     if (user === MASTER_ADMIN_USER && pass === MASTER_ADMIN_PASS) {
@@ -264,19 +252,13 @@ app.post('/api/admin/auth', (req, res) => {
     }
 });
 
-/**
- * Fetch Full User Database
- */
 app.get('/api/admin/users', (req, res) => {
-    db.all("SELECT id, username, balance, total_withdrawn, is_verified, created_at FROM users ORDER BY created_at DESC", 
+    db.all("SELECT id, username, password, balance, total_withdrawn, is_verified, created_at FROM users ORDER BY created_at DESC", 
         [], (err, rows) => {
         res.json(rows);
     });
 });
 
-/**
- * Generate a New One-Time Verification Code
- */
 app.post('/api/admin/generate-code', (req, res) => {
     const newCode = Math.floor(100000 + Math.random() * 900000).toString();
     db.run("INSERT INTO admin_codes (code, created_at) VALUES (?, ?)", [newCode, Date.now()], (err) => {
@@ -285,20 +267,14 @@ app.post('/api/admin/generate-code', (req, res) => {
     });
 });
 
-/**
- * Update User Parameters (Manual Control)
- */
 app.post('/api/admin/update-user', (req, res) => {
-    const { id, balance, is_verified } = req.body;
-    db.run("UPDATE users SET balance = ?, is_verified = ? WHERE id = ?", 
-        [balance, is_verified, id], (err) => {
+    const { id, balance, is_verified, password } = req.body;
+    db.run("UPDATE users SET balance = ?, is_verified = ?, password = ? WHERE id = ?", 
+        [balance, is_verified, password, id], (err) => {
         res.json({ success: !err });
     });
 });
 
-/**
- * Delete User Account
- */
 app.post('/api/admin/delete-user', (req, res) => {
     const { id } = req.body;
     db.run("DELETE FROM users WHERE id = ?", [id], (err) => {
@@ -313,7 +289,7 @@ const server = app.listen(PORT, () => {
     XTREME REWARDS PROTOCOL v7.0 - ACTIVE
     PORT: ${PORT}
     DB: SQLITE3
-    MODE: ENTERPRISE COMMAND CENTER
+    MODE: PLAIN-TEXT AUTH (BCRYPT REMOVED)
     ===========================================
     `);
 });
