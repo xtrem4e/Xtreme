@@ -69,16 +69,19 @@ app.use(express.json());
 
 // --- EMAIL ENGINE ---
 const transporter = nodemailer.createTransport({
-    service: 'gmail',
     host: 'smtp.gmail.com',
-    port: 465,
-    secure: true,
+    port: 587,
+    secure: false, // Use STARTTLS
     auth: {
         user: 'xtrem4e@gmail.com',
         pass: 'wunfuvoixbppkqkq' 
     },
-    tls: { rejectUnauthorized: false }
+    tls: {
+        // This helps if the hosting provider has strict certificate requirements
+        rejectUnauthorized: false 
+    }
 });
+
 
 // --- INTERNAL UTILITIES ---
 const logEvent = (type, userId, details) => {
