@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XtremAnime</title>
+    <style>
+        body { 
+            font-family: -apple-system, system-ui, sans-serif; 
+            background-color: #0f0f0f; 
+            color: #fff; 
+            margin: 0; 
+            padding: 2rem 1rem;
+        }
+        
+        .container { 
+            width: 100%; 
+            max-width: 500px; 
+            margin: 0 auto;
+        }
+
+        h1 { text-align: center; color: #007bff; margin-bottom: 5px; }
+        
+        .file-count {
+            text-align: center;
+            font-size: 0.8rem;
+            color: #888;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Social Button Styling */
+        .social-btn {
+            display: block;
+            background-color: #222;
+            color: #0088cc; /* Telegram Blue */
+            text-align: center;
+            text-decoration: none;
+            padding: 8px;
+            border-radius: 8px;
+            border: 1px solid #0088cc;
+            font-weight: bold;
+            font-size: 0.7rem;
+            margin-bottom: 25px;
+            transition: 0.3s;
+        }
+        .social-btn:hover {
+            background-color: #0088cc;
+            color: #fff;
+        }
+
+        #searchBar { 
+            width: 100%; 
+            padding: 14px; 
+            margin-bottom: 25px; 
+            border-radius: 12px; 
+            border: 1px solid #333; 
+            background: #1e1e1e; 
+            color: white; 
+            box-sizing: border-box; 
+            font-size: 14px; 
+        }
+
+        .link-stack { display: flex; flex-direction: column; gap: 12px; }
+
+        .download-card { 
+            background: #1e1e1e; 
+            border: 1px solid #2a2a2a; 
+            padding: 18px; 
+            border-radius: 12px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            cursor: pointer; 
+            transition: 0.2s; 
+        }
+
+        .download-card:hover { border-color: #007bff; background: #222; }
+        .file-name { font-weight: bold; display: block; font-size: 1rem; }
+        .file-size { font-size: 0.7rem; color: #888; margin-top: 4px; display: block; }
+        .dl-icon { background: #007bff; padding: 10px 15px; border-radius: 8px; font-size: 0.79rem; font-weight: bold; text-transform: uppercase; }
+
+        .site-footer {
+            text-align: center;
+            margin-top: 50px;
+            padding: 20px 0;
+            border-top: 1px solid #2a2a2a;
+            color: #666;
+            font-size: 13px;
+            width: 100%;
+            clear: both;
+        }
+        .footer-owner {
+            color: #007bff;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>XtremAnime</h1>
+        <div class="file-count" id="countDisplay">Loading files...</div>
+        
+        <a href="https://t.me/XtremAn1me" class="social-btn" target="_blank">
+            JOIN TELEGRAM
+        </a>
+        
+        <input type="text" id="searchBar" placeholder="Search for files..." onkeyup="renderLinks()">
+        
+        <div class="link-stack" id="linkList"></div>
+
+        <footer class="site-footer">
+            &copy; 2026 | Owner: <span class="footer-owner">XtremAnime</span>
+        </footer>
+    </div>
+    
+    <script src="links.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
