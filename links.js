@@ -9,6 +9,7 @@ const myFiles = [
     { name: "Jujutsu Kaisen: S3E03", size: "160.67 MB", url: "https://kwik.cx/f/P0aofLOSYjhW" },
     { name: "Jujutsu Kaisen: S3E04", size: "225.36 MB", url: "https://kwik.cx/f/pz28Hh2u0xRa" },
     { name: "Jujutsu Kaisen: S3E05", size: "133.08 MB", url: "https://kwik.cx/f/rOkHYJ1ptSP2" },
+    { name: "Jujutsu Kaisen: S3E06", size: "156.67 MB", url: "https://kwik.cx/f/LUGnSv95kbJE" },
     
     
     // To add more, just paste a new line below this one:
