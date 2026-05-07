@@ -16,11 +16,9 @@ function renderLinks() {
             const card = document.createElement('div');
             card.className = 'download-card';
             
+            // Adsterra logic removed: now redirects directly to the file
             card.onclick = function() {
-                window.open(adsterraLink, '_blank');
-                setTimeout(() => {
-                    window.location.href = file.url;
-                }, 800);
+                window.location.href = file.url;
             };
             
             card.innerHTML = `
