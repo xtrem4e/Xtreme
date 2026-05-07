@@ -1,3 +1,7 @@
+// CONFIGURATION //calistein4@gmail.com 
+//Caleb04
+const adsterraLink = "https://is.gd/axqRCd";
+
 // YOUR DOWNLOADS
 const myFiles = [
     { name: "Jujutsu Kaisen: S3E01", size: "180.20 MB", url: "https://kwik.cx/f/h8KC7LRY2eFw" },
